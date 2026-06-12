@@ -1,8 +1,12 @@
-import { getChannels, getEvents, getStats, isConfigured } from "../lib/supabase";
+import { getChannels, getEvents, getStats, getAnalytics, isConfigured } from "../lib/supabase";
 import Refresher from "./refresher";
 import Controls from "./controls";
 import Channels from "./channels";
 import Feed from "./feed";
+import Performers from "./performers";
+import { LineChart } from "./charts";
+import { aggregate } from "./analytics";
+import { compact } from "./format";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +22,14 @@ export default async function Page() {
     );
   }
 
-  const [channels, events, stats] = await Promise.all([
+  const [channels, events, stats, analyticsRows] = await Promise.all([
     getChannels(),
     getEvents(80),
     getStats(),
+    getAnalytics(),
   ]);
+
+  const a = aggregate(analyticsRows);
 
   // Failing channels float to the top, then by upload volume.
   const sorted = [...channels].sort((a, b) => {
@@ -55,6 +62,8 @@ export default async function Page() {
       </header>
 
       <section className="stats">
+        <Stat n={compact(a.totalSubs)} l="Total subscribers" accent="accent" />
+        <Stat n={compact(a.totalViews)} l="Total views" accent="info" />
         <Stat n={channels.length} l="Channels" />
         <Stat n={totalUploads.toLocaleString()} l="Total uploads" />
         <Stat n={stats.uploads24.toLocaleString()} l="Uploads · 24h" accent="info" />
@@ -66,6 +75,23 @@ export default async function Page() {
         <Stat n={failing.length} l="Channels failing" accent={failing.length ? "err" : null} />
         <Stat n={events.length} l="Recent events" />
       </section>
+
+      <div className="section-title">
+        <span>Performance</span>
+        <span className="section-meta">
+          {a.hasData ? "channel analytics · backfilled daily" : "no analytics synced yet"}
+        </span>
+      </div>
+      <div className="charts-grid">
+        <LineChart data={a.viewsByDay} label="Views / day · all channels" color="var(--info)" />
+        <LineChart data={a.subsByDay} label="Total subscribers" color="var(--accent)" />
+      </div>
+
+      <div className="section-title">
+        <span>Top performers</span>
+        <span className="section-meta">ranked · toggle metric</span>
+      </div>
+      <Performers channels={a.channels} />
 
       <div className="section-title">
         <span>Channels</span>
