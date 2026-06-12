@@ -70,6 +70,8 @@ export function aggregate(rows) {
         28,
         (r) => num(r.subs_gained) - num(r.subs_lost)
       ),
+      watchMinutes: series.reduce((s, r) => s + num(r.minutes_watched), 0),
+      days: series.length,
       spark: series.map((r) => num(r.views)),
     });
   }
@@ -77,16 +79,19 @@ export function aggregate(rows) {
   const totalSubs = channels.reduce((s, c) => s + c.subs, 0);
   const totalViews = channels.reduce((s, c) => s + c.views, 0);
 
-  // ── All-channel daily views ─────────────────────────────────────────────
+  // ── All-channel daily series ────────────────────────────────────────────
   const viewsMap = new Map();
+  const watchMap = new Map(); // watch hours per day
   const netMap = new Map(); // net subscriber change per day
   for (const r of list) {
     const d = String(r.date);
     viewsMap.set(d, (viewsMap.get(d) || 0) + num(r.views));
+    watchMap.set(d, (watchMap.get(d) || 0) + num(r.minutes_watched));
     netMap.set(d, (netMap.get(d) || 0) + num(r.subs_gained) - num(r.subs_lost));
   }
   const dates = Array.from(viewsMap.keys()).sort();
   const viewsByDay = dates.map((d) => ({ date: d, value: viewsMap.get(d) }));
+  const watchByDay = dates.map((d) => ({ date: d, value: Math.round(watchMap.get(d) / 60) }));
 
   // ── Total subscribers over time ─────────────────────────────────────────
   // The Data API only gives the CURRENT total; the Analytics API gives daily
@@ -104,7 +109,52 @@ export function aggregate(rows) {
     value: baseline + cumByDate.get(d),
   }));
 
+  const totalWatchHours = channels.reduce(
+    (s, c) => s + Math.round(c.watchMinutes / 60),
+    0
+  );
+
   channels.sort((a, b) => b.views - a.views);
 
-  return { hasData: true, channels, totalSubs, totalViews, viewsByDay, subsByDay };
+  return {
+    hasData: true,
+    channels,
+    totalSubs,
+    totalViews,
+    totalWatchHours,
+    viewsByDay,
+    watchByDay,
+    subsByDay,
+  };
+}
+
+// Re-bucket a daily flow series [{date,value}] by granularity. "cumulative"
+// returns a running total (a level, not a flow). Used by the views chart toggle.
+// Note: YouTube's API is daily at finest — there is no hourly granularity.
+export function bucket(daily, mode) {
+  const d = daily || [];
+  if (mode === "cumulative") {
+    let s = 0;
+    return d.map((p) => ({ date: p.date, value: (s += num(p.value)) }));
+  }
+  if (mode === "day" || !mode) return d;
+  const key =
+    mode === "month"
+      ? (dt) => String(dt).slice(0, 7)
+      : (dt) => mondayOf(String(dt));
+  const map = new Map();
+  for (const p of d) {
+    const k = key(p.date);
+    map.set(k, (map.get(k) || 0) + num(p.value));
+  }
+  return Array.from(map.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, value]) => ({ date, value }));
+}
+
+function mondayOf(s) {
+  const dt = new Date(s + "T00:00:00");
+  const back = (dt.getDay() + 6) % 7; // 0 = Monday
+  dt.setDate(dt.getDate() - back);
+  return dt.toISOString().slice(0, 10);
 }

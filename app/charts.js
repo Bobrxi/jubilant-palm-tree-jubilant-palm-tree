@@ -12,21 +12,25 @@ function pathFrom(points, w, h, pad, min, max) {
   return { line, area, x, y };
 }
 
-// Full-width line chart with gradient area fill + min/max/last labels.
-export function LineChart({ data, color = "var(--accent)", label, height = 190 }) {
+function signedNum(v) {
+  const s = compact(Math.abs(v));
+  return v > 0 ? "+" + s : v < 0 ? "−" + s : s;
+}
+
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < (s || "").length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return h;
+}
+
+// Just the plotted area + footer (no card chrome) — composable into headers.
+export function ChartBody({ data, color = "var(--accent)", height = 190 }) {
   const w = 640;
   const h = height;
   const pad = 26;
   const pts = (data || []).filter((d) => d && Number.isFinite(Number(d.value)));
   if (pts.length < 2) {
-    return (
-      <div className="chart-card">
-        <div className="chart-head">
-          <span className="chart-label">{label}</span>
-        </div>
-        <div className="chart-empty">Not enough data yet — needs ≥ 2 days.</div>
-      </div>
-    );
+    return <div className="chart-empty">Not enough data yet — needs ≥ 2 points.</div>;
   }
   const vals = pts.map((p) => Number(p.value));
   const min = Math.min(...vals);
@@ -34,30 +38,44 @@ export function LineChart({ data, color = "var(--accent)", label, height = 190 }
   const { line, area } = pathFrom(pts, w, h, pad, min, max);
   const last = vals[vals.length - 1];
   const first = vals[0];
-  const id = "g" + Math.abs(hashStr(label || color)).toString(36);
+  const id = "g" + Math.abs(hashStr(color + pts.length + max)).toString(36);
+  const lastX = pad + ((pts.length - 1) * (w - 2 * pad)) / (pts.length - 1 || 1);
+  const lastY = h - pad - ((last - min) / (max - min || 1)) * (h - 2 * pad);
   return (
-    <div className="chart-card">
-      <div className="chart-head">
-        <span className="chart-label">{label}</span>
-        <span className="chart-last" style={{ color }}>
-          {compact(last)}
-        </span>
-      </div>
+    <>
       <svg viewBox={`0 0 ${w} ${h}`} className="chart-svg" preserveAspectRatio="none">
         <defs>
           <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+            <stop offset="0%" stopColor={color} stopOpacity="0.30" />
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d={area} fill={`url(#${id})`} />
         <path d={line} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        <circle cx={lastX} cy={lastY} r="3.2" fill={color} />
       </svg>
       <div className="chart-foot">
         <span>{pts[0].date}</span>
         <span className="chart-range">min {compact(min)} · max {compact(max)} · Δ {signedNum(last - first)}</span>
         <span>{pts[pts.length - 1].date}</span>
       </div>
+    </>
+  );
+}
+
+// Full chart card: label + last value + body.
+export function LineChart({ data, color = "var(--accent)", label, height = 190 }) {
+  const pts = (data || []).filter((d) => d && Number.isFinite(Number(d.value)));
+  const last = pts.length ? Number(pts[pts.length - 1].value) : null;
+  return (
+    <div className="chart-card">
+      <div className="chart-head">
+        <span className="chart-label">{label}</span>
+        {last != null ? (
+          <span className="chart-last" style={{ color }}>{compact(last)}</span>
+        ) : null}
+      </div>
+      <ChartBody data={data} color={color} height={height} />
     </div>
   );
 }
@@ -75,15 +93,4 @@ export function Sparkline({ values, color = "var(--accent)", width = 92, height 
       <path d={line} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   );
-}
-
-function signedNum(v) {
-  const s = compact(Math.abs(v));
-  return v > 0 ? "+" + s : v < 0 ? "−" + s : s;
-}
-
-function hashStr(s) {
-  let h = 0;
-  for (let i = 0; i < (s || "").length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return h;
 }

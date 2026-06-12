@@ -442,6 +442,104 @@ a { color: var(--info); text-decoration: none; }
 .perf-sub { font-size: 10.5px; color: var(--text-ter); font-variant-numeric: tabular-nums; }
 .spark { flex-shrink: 0; opacity: 0.85; }
 
+/* ── Tab navigation ───────────────────────────────────────────────────── */
+.tabnav {
+  display: flex; gap: 4px;
+  margin: 0 0 26px;
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-display);
+  font-size: 13px; letter-spacing: 1.6px; text-transform: uppercase;
+  color: var(--text-ter);
+  padding: 12px 20px 14px;
+  border: 1px solid transparent; border-bottom: none;
+  border-radius: 9px 9px 0 0;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+.tab:hover { color: var(--text-sec); background: rgba(139, 123, 255, 0.05); }
+.tab.on {
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(139, 123, 255, 0.10), transparent);
+}
+.tab-icon { font-size: 13px; color: var(--accent); opacity: 0.85; }
+.tab-glow {
+  position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent), 0 0 4px var(--accent);
+  border-radius: 2px;
+  animation: fadeUp 0.3s ease both;
+}
+
+/* ── Chart granularity toggle ─────────────────────────────────────────── */
+.granularity { display: inline-flex; gap: 0; margin: 2px 0 10px; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+.gbtn {
+  font-family: var(--font-display); font-size: 9.5px; letter-spacing: 1px;
+  padding: 5px 10px; border: none; border-right: 1px solid var(--border);
+  background: var(--panel); color: var(--text-ter); cursor: pointer;
+  transition: all 0.14s ease;
+}
+.gbtn:last-child { border-right: none; }
+.gbtn:hover { color: var(--text-sec); background: var(--panel-2); }
+.gbtn.on { background: var(--info); color: #06121f; font-weight: 700; }
+
+/* ── Clickable channel cards ──────────────────────────────────────────── */
+.chan-card { display: block; cursor: pointer; }
+.chan-card:hover .chan-go { color: var(--accent); }
+.chan-hero {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin: 4px 0 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border);
+}
+.chan-hero-figs { display: flex; gap: 20px; }
+.chan-fig { display: flex; flex-direction: column; }
+.chan-fig-n {
+  font-family: var(--font-display); font-size: 23px; font-weight: 700;
+  letter-spacing: 0.5px; font-variant-numeric: tabular-nums; line-height: 1;
+}
+.chan-fig-l { font-size: 9.5px; color: var(--text-ter); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+.chan-go {
+  margin-top: 12px; padding-top: 11px; border-top: 1px dashed var(--border);
+  font-family: var(--font-display); font-size: 10.5px; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--text-ter); transition: color 0.15s ease;
+}
+
+/* ── Detail page ──────────────────────────────────────────────────────── */
+.back-link {
+  display: inline-block; font-family: var(--font-mono); font-size: 12px;
+  color: var(--text-ter); margin-bottom: 16px; letter-spacing: 0.5px;
+  transition: color 0.15s ease;
+}
+.back-link:hover { color: var(--accent); }
+.detail-head {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 14px; margin-bottom: 10px;
+}
+.detail-title { display: flex; align-items: center; gap: 14px; }
+.detail-title h1 {
+  font-family: var(--font-display); font-size: 30px; font-weight: 700;
+  letter-spacing: 1px; margin: 0; text-shadow: 0 0 22px rgba(139, 123, 255, 0.25);
+}
+.detail-actions { display: flex; gap: 8px; }
+.detail-stats { margin-top: 18px; }
+
+.readout {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  gap: 11px;
+}
+.read {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: 13px 16px;
+}
+.read-k { font-size: 10px; color: var(--text-ter); text-transform: uppercase; letter-spacing: 1.2px; }
+.read-v {
+  font-family: var(--font-display); font-size: 18px; font-weight: 600;
+  margin-top: 5px; font-variant-numeric: tabular-nums; color: var(--text);
+}
+.read-sub { font-size: 10.5px; color: var(--text-sec); margin-top: 3px; }
+.ev2 { grid-template-columns: 150px 1fr; }
+
 /* ── Scrollbar ────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 11px; height: 11px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
